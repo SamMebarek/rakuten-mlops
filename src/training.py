@@ -53,7 +53,7 @@ def main():
 
     # 3. Séparation X / y
     y = df["Prix"].values
-    X = df.drop(columns=["Prix"])
+    X = df.drop(columns=["Prix", "SKU", "Timestamp"])
     logger.info("Séparation X / y : X.shape=%s, y.shape=%s", X.shape, y.shape)
 
     # 4. Conversion de toutes les colonnes en numérique (pour éviter les erreurs XGBoost)
