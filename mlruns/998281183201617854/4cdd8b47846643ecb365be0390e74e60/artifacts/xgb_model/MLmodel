@@ -1,0 +1,46 @@
+artifact_path: xgb_model
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.8
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.6.0
+is_signature_from_type_hint: false
+mlflow_version: 2.20.2
+model_size_bytes: 828087
+model_uuid: 04944b47b1b04f868518eeec9dd3b62f
+run_id: 4cdd8b47846643ecb365be0390e74e60
+saved_input_example_info:
+  artifact_path: input_example.json
+  pandas_orient: split
+  serving_input_path: serving_input_example.json
+  type: dataframe
+signature:
+  inputs: '[{"type": "double", "name": "Categorie_Electronique", "required": true},
+    {"type": "double", "name": "Categorie_Livres", "required": true}, {"type": "double",
+    "name": "Categorie_Vetements", "required": true}, {"type": "double", "name": "0",
+    "required": true}, {"type": "double", "name": "2", "required": true}, {"type":
+    "double", "name": "3", "required": true}, {"type": "double", "name": "4", "required":
+    true}, {"type": "double", "name": "5", "required": true}, {"type": "long", "name":
+    "6", "required": true}, {"type": "double", "name": "7", "required": true}, {"type":
+    "long", "name": "8", "required": true}, {"type": "double", "name": "9", "required":
+    true}, {"type": "double", "name": "10", "required": true}, {"type": "long", "name":
+    "11", "required": true}, {"type": "long", "name": "12", "required": true}, {"type":
+    "double", "name": "13", "required": true}, {"type": "long", "name": "14", "required":
+    true}, {"type": "long", "name": "15", "required": true}, {"type": "long", "name":
+    "16", "required": true}, {"type": "long", "name": "17", "required": true}, {"type":
+    "double", "name": "18", "required": true}, {"type": "double", "name": "19", "required":
+    true}, {"type": "double", "name": "20", "required": true}, {"type": "double",
+    "name": "21", "required": true}]'
+  outputs: '[{"type": "float", "required": true}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2025-02-14 23:09:58.084897'

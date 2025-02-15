@@ -1,0 +1,52 @@
+# config.yaml
+# Fichier de configuration pour la génération de données synthétiques
+
+seed: 42
+random_seed_range: 10001
+
+# Paramètres globaux
+n_skus: 60                 # Nombre total de produits
+n_periodes: 600             # Nombre de jours à remonter à partir de maintenant
+
+# Paramètres de prix par catégorie
+categories:
+  Electronique:
+    prix_moyen: 450
+    prix_ecart_type: 50
+    plancher_pct: 0.4
+    delta: 0.01
+    gamma: 0.0015
+    demande_lambda: 3
+    remise_prob: 0.05
+
+  Livres:
+    prix_moyen: 25
+    prix_ecart_type: 5
+    plancher_pct: 0.2
+    delta: 0.005
+    gamma: 0.0005
+    demande_lambda: 7
+    remise_prob: 0.15
+
+  Vetements:
+    prix_moyen: 50
+    prix_ecart_type: 10
+    plancher_pct: 0.5
+    delta: 0.02
+    gamma: 0.001
+    demande_lambda: 5
+    remise_prob: 0.1
+
+# Coefficients pour le modèle de demande
+beta_prix_mean: 0.05
+beta_prix_std: 0.005
+
+beta_qualite_mean: 0.05
+beta_qualite_std: 0.005
+
+beta_promo_mean: 0.03
+beta_promo_std: 0.002
+
+erreur_std: 1
+remise_valeur: 0.1
+prix_minimum: 0.01

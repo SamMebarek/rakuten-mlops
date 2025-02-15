@@ -1,0 +1,31 @@
+2025-02-14 08:22:46,903 - INFO - Début de la génération de données synthétiques.
+2025-02-14 08:22:46,918 - INFO - Paramètres chargés avec seed=42
+2025-02-14 08:23:11,010 - INFO - Données synthétiques sauvegardées dans Data/donnees_synthetiques.csv
+2025-02-14 08:23:11,011 - INFO - Génération de données synthétiques terminée avec succès.
+2025-02-14 08:23:40,290 - INFO - Début de la génération de données synthétiques.
+2025-02-14 08:23:40,301 - INFO - Paramètres chargés avec seed=42
+2025-02-14 08:24:05,038 - INFO - Données synthétiques sauvegardées dans Data/donnees_synthetiques.csv
+2025-02-14 08:24:05,043 - INFO - Génération de données synthétiques terminée avec succès.
+2025-02-14 08:31:07,756 - INFO - Début de la génération de données synthétiques.
+2025-02-14 08:32:48,852 - INFO - Début de la génération de données synthétiques.
+2025-02-14 08:32:48,861 - INFO - Paramètres chargés avec seed=42, n_periodes=600
+2025-02-14 08:33:15,856 - INFO - Données synthétiques sauvegardées dans Data/donnees_synthetiques.csv
+2025-02-14 08:33:15,856 - INFO - Génération de données synthétiques terminée avec succès.
+2025-02-14 08:35:12,637 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-02-14 08:35:12,770 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-02-14 08:36:49,091 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-02-14 08:36:49,125 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-02-14 10:19:43,334 - INFO - Début de la génération de données synthétiques.
+2025-02-14 10:28:02,622 - INFO - Début de la génération de données synthétiques.
+2025-02-14 10:29:09,705 - INFO - Début de la génération de données synthétiques.
+2025-02-14 10:29:09,711 - INFO - Paramètres chargés avec seed=42, n_periodes=600
+2025-02-14 10:29:34,137 - INFO - Données synthétiques sauvegardées dans Data/donnees_synthetiques.csv
+2025-02-14 10:29:34,138 - INFO - Génération de données synthétiques terminée avec succès.
+2025-02-14 10:29:34,900 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-02-14 10:29:34,994 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-02-14 10:30:32,014 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-02-14 10:30:32,063 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-02-15 05:50:54,011 - INFO - Début de la génération de données synthétiques.
+2025-02-15 05:50:54,029 - INFO - Paramètres chargés avec seed=42, n_periodes=600
+2025-02-15 05:51:21,522 - INFO - Données synthétiques sauvegardées dans Data/donnees_synthetiques.csv
+2025-02-15 05:51:21,522 - INFO - Génération de données synthétiques terminée avec succès.
