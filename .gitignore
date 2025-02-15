@@ -1,0 +1,7 @@
+Logs/
+*.log
+mlruns/
+venv/
+.env
+*.pyc
+__pycache__/
