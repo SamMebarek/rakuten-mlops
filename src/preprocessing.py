@@ -1,3 +1,5 @@
+# preprocessing.py
+
 import logging
 import os
 import numpy as np
@@ -23,7 +25,7 @@ def drop_unused_columns(df: pd.DataFrame) -> pd.DataFrame:
             "Jour",
             "Heure",
             "Promotion",
-            "Categorie",  # Suppression après preprocessing
+            "Categorie",
         ],
         errors="ignore",
     )
@@ -63,7 +65,7 @@ def clip_elasticite(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# Définition des transformations
+# Définition du pipeline
 preprocessing_pipeline = Pipeline(
     [
         ("convert_types", FunctionTransformer(convert_types, validate=False)),
@@ -107,7 +109,7 @@ def run_preprocessing(
     # Création du DataFrame final
     df_final = pd.DataFrame(df_processed, columns=remaining_columns)
 
-    # Réintégration de SKU **sans perturber l'entraînement**
+    # Réintégration de SKU
     df_final.insert(0, "SKU", sku_column.values)
 
     # Vérification avant sauvegarde
@@ -116,6 +118,7 @@ def run_preprocessing(
 
     # Sauvegarde
     df_final.to_csv(output_csv, index=False)
+
     logger.info("Données prétraitées sauvegardées avec succès.")
 
 

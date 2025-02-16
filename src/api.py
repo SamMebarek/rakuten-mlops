@@ -48,11 +48,6 @@ def load_latest_model():
 model = load_latest_model()
 
 
-@app.get("/health")
-def health():
-    return {"status": "OK"}
-
-
 # Définition du modèle de requête
 class PredictionRequest(BaseModel):
     sku: str = Field(..., title="SKU", description="Identifiant du produit")
@@ -63,6 +58,11 @@ class PredictionResponse(BaseModel):
     sku: str
     timestamp: str
     predicted_price: float
+
+
+@app.get("/health")
+def health():
+    return {"status": "OK"}
 
 
 @app.post("/predict", response_model=PredictionResponse)

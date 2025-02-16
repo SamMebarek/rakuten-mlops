@@ -33,7 +33,7 @@ def main():
       - Sépare X (features) et y (cible),
       - Convertit toutes les features en numérique (gestion des NaN),
       - Réalise le train/test split,
-      - Lance une recherche d'hyperparamètres avec RandomizedSearchCV sur XGBRegressor,
+      - Recherche d'hyperparamètres avec RandomizedSearchCV sur XGBRegressor,
       - Calcule et loggue les métriques dans MLflow,
       - Sauvegarde le meilleur modèle dans MLflow ET localement dans 'models/'.
     """
@@ -46,7 +46,7 @@ def main():
     df = pd.read_csv(DATA_PATH)
     logger.info("Données prétraitées chargées : shape=%s", df.shape)
 
-    # 2. Vérifier la présence de la colonne 'Prix'
+    # 2. Vérification la présence de la colonne 'Prix'
     if "Prix" not in df.columns:
         logger.error("La colonne 'Prix' est manquante dans le DataFrame prétraité.")
         return
@@ -56,11 +56,11 @@ def main():
     X = df.drop(columns=["Prix", "SKU", "Timestamp"])
     logger.info("Séparation X / y : X.shape=%s, y.shape=%s", X.shape, y.shape)
 
-    # 4. Conversion de toutes les colonnes en numérique (pour éviter les erreurs XGBoost)
+    # 4. Conversion de toutes les colonnes en numérique pour XGBoost
     X = X.apply(pd.to_numeric, errors="coerce")
     if X.isna().any().any():
         logger.warning(
-            "Des valeurs NaN ont été trouvées après conversion en numérique dans X. Remplissage par 0."
+            "Des valeurs NaN ont été trouvées après conversion en numérique dans X. Remplissage par des 0."
         )
         X.fillna(0, inplace=True)
 
@@ -129,10 +129,10 @@ def main():
         mlflow.log_metric("r2", r2_xgb)
 
         # 8. Enregistrement du modèle dans MLflow et localement avec versioning
-        input_example = X_test.iloc[0:1]  # Extrait une ligne pour exemple d'input
+        input_example = X_test.iloc[0:1]
         os.makedirs(MODEL_DIR, exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # Format : YYYYMMDD_HHMMSS
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         model_filename = f"xgb_model_{timestamp}"
         model_path = os.path.join(MODEL_DIR, model_filename)
 
@@ -150,7 +150,7 @@ def main():
         mlflow.sklearn.save_model(model_xgb.best_estimator_, path=model_path)
         logger.info(f"Modèle sauvegardé localement dans {model_path}")
 
-        # Mettre à jour le fichier de référence vers le dernier modèle
+        # Mise à jour le fichier de référence vers le dernier modèle
         latest_model_path = os.path.join(MODEL_DIR, "latest_model.txt")
         with open(latest_model_path, "w") as f:
             f.write(model_filename)
