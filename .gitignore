@@ -1,7 +1,48 @@
+# fichiers de logs
 Logs/
 *.log
+
+# données et artefacts générés
+Data/
+models/
 mlruns/
-venv/
-.env
-*.pyc
+*.csv
+*.json
+*.txt
+*.pkl
+*.ipynb
+
+# fichiers temporaires Python
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.ipynb_checkpoints/
+
+# environnements virtuels
+venv/
+.venv/
+
+# caches et fichiers de test
+.pytest_cache/
+.mypy_cache/
+.tox/
+coverage.xml
+htmlcov/
+
+# fichiers spécifiques à macOS et Windows
+.DS_Store
+Thumbs.db
+
+# fichiers de configuration secrets
+.env
+secrets.yaml
+
+# artefacts Docker
+docker-compose.override.yml
+*.tar
+*.img
+
+# fichiers de contrôle de version internes
+.idea/
+.vscode/

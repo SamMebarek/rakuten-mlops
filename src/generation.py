@@ -15,11 +15,14 @@ import os
 # Création du dossier Logs si inexistant
 os.makedirs("Logs", exist_ok=True)
 
-# Récupérer le chemin absolu du dossier où se trouve generation.py
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Récupération du répertoire actuel
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-# Chemin par défaut vers config.yaml, placé dans le même dossier
-DEFAULT_CONFIG_PATH = os.path.join(CURRENT_DIR, "config.yaml")
+# Chemin par défaut vers config.yaml à la racine du projet
+DEFAULT_CONFIG_PATH = os.path.join(ROOT_DIR, "config.yaml")
+
+# Récupérarion du répertoire actuel
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Création du dossier Logs si inexistant
 os.makedirs(os.path.join(CURRENT_DIR, "Logs"), exist_ok=True)

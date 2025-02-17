@@ -1,26 +1,53 @@
+# src/api.py
+
 from fastapi import FastAPI, HTTPException
 import pandas as pd
 import numpy as np
 import joblib
 import os
+import logging
 from datetime import datetime
 from pydantic import BaseModel, Field
-from datetime import datetime
 
 # Configuration
-DATA_PATH = "Data/preprocessed_data.csv"
+DATA_DIR = "Data"
+LATEST_PREPROCESSED_FILE = os.path.join(DATA_DIR, "latest_preprocessed.txt")
 MODEL_DIR = "models"
 LATEST_MODEL_FILE = os.path.join(MODEL_DIR, "latest_model.txt")
+
+# Configuration du logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("api")
 
 # Initialisation de l'API
 app = FastAPI()
 
 
-# Chargement des données prétraitées
+# Chargement du dernier fichier prétraité
+def get_latest_preprocessed_file():
+    try:
+        if not os.path.exists(LATEST_PREPROCESSED_FILE):
+            raise FileNotFoundError("Fichier latest_preprocessed.txt introuvable.")
+        with open(LATEST_PREPROCESSED_FILE, "r") as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Erreur lors de la récupération du fichier prétraité : {e}")
+        return None
+
+
 def load_data():
-    if os.path.exists(DATA_PATH):
-        return pd.read_csv(DATA_PATH)
-    return None
+    try:
+        latest_data_path = get_latest_preprocessed_file()
+        if latest_data_path and os.path.exists(latest_data_path):
+            return pd.read_csv(latest_data_path)
+        else:
+            logger.error("Fichier prétraité introuvable ou corrompu.")
+            return None
+    except Exception as e:
+        logger.error(f"Erreur lors du chargement des données prétraitées : {e}")
+        return None
 
 
 data = load_data()
@@ -28,21 +55,29 @@ data = load_data()
 
 # Chargement dynamique du modèle avec logs de diagnostic
 def load_latest_model():
-    if not os.path.exists(LATEST_MODEL_FILE):
-        print("[ERREUR] latest_model.txt introuvable.")
+    try:
+        if not os.path.exists(LATEST_MODEL_FILE):
+            raise FileNotFoundError("latest_model.txt introuvable.")
+
+        with open(LATEST_MODEL_FILE, "r") as f:
+            model_folder = f.read().strip()
+
+        model_path = os.path.join(MODEL_DIR, model_folder, "model.pkl")
+
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(
+                f"Modèle introuvable à l'emplacement : {model_path}"
+            )
+
+        model = joblib.load(model_path)
+        if not hasattr(model, "predict"):
+            raise ValueError("Le modèle chargé n'est pas valide.")
+
+        logger.info(f"Modèle chargé avec succès depuis : {model_path}")
+        return model
+    except Exception as e:
+        logger.error(f"Erreur lors du chargement du modèle : {e}")
         return None
-
-    with open(LATEST_MODEL_FILE, "r") as f:
-        model_folder = f.read().strip()
-
-    model_path = os.path.join(MODEL_DIR, model_folder, "model.pkl")
-
-    if not os.path.exists(model_path):
-        print(f"[ERREUR] Modèle introuvable à l'emplacement : {model_path}")
-        return None
-
-    print(f"[INFO] Chargement du modèle depuis : {model_path}")
-    return joblib.load(model_path)
 
 
 model = load_latest_model()
@@ -65,6 +100,20 @@ def health():
     return {"status": "OK"}
 
 
+@app.get("/status")
+def status():
+    model_status = "chargé" if model else "non chargé"
+    return {
+        "model_status": model_status,
+        "last_model": (
+            open(LATEST_MODEL_FILE).read().strip()
+            if os.path.exists(LATEST_MODEL_FILE)
+            else "Inconnu"
+        ),
+        "data_status": "chargées" if data is not None else "non chargées",
+    }
+
+
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
     global model, data
@@ -77,6 +126,7 @@ def predict(request: PredictionRequest):
     # Vérification de la présence du SKU dans les données
     sku_data = data[data["SKU"] == request.sku]
     if sku_data.empty:
+        logger.warning(f"SKU {request.sku} non trouvé dans les données.")
         raise HTTPException(status_code=404, detail="SKU non trouvé.")
 
     # Trier par timestamp et prendre les 3 dernières occurrences
@@ -119,8 +169,10 @@ def predict(request: PredictionRequest):
         "Heure_sin",
         "Heure_cos",
     ]
-
     if list(feature_values.columns) != expected_features:
+        logger.error(
+            f"Mismatch des features. Attendu: {expected_features}, Obtenu: {list(feature_values.columns)}"
+        )
         raise HTTPException(
             status_code=500,
             detail=f"Les features ne correspondent pas à celles attendues. Attendu: {expected_features}, Obtenu: {list(feature_values.columns)}",

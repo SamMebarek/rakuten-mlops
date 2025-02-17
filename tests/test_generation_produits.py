@@ -1,4 +1,4 @@
-# test_generation_produits.py
+# test/test_generation_produits.py
 
 import pytest
 import os
