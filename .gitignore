@@ -9,6 +9,7 @@ mlruns/
 *.csv
 *.json
 *.txt
+!requirements.txt
 *.pkl
 *.ipynb
 
