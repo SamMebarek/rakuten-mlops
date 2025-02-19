@@ -1,3 +1,9 @@
+# params.yaml
+
 ingestion:
-  input: data/donnees_synthetiques.csv
-  output: data/observations.csv
+  input: "data/donnees_synthetiques.csv"
+  output: "data/observations.csv"
+
+preprocessing:
+  input: "data/observations.csv"
+  output: "data/preprocessed_data.csv"

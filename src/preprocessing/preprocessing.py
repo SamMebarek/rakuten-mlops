@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
-import subprocess  # Pour l'intégration avec DVC
+import yaml
 
 # Configuration du logging pour le module preprocessing
 os.makedirs("logs", exist_ok=True)
@@ -16,18 +16,6 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger("preprocessing")
-
-# Chemin du fichier contenant la dernière version ingérée
-LATEST_INGESTED_FILE = "data/latest_ingested.txt"
-
-
-def get_latest_file(file_path):
-    """Récupère le dernier fichier stocké dans un fichier de référence"""
-    if not os.path.exists(file_path):
-        logger.error(f"Fichier de référence {file_path} introuvable.")
-        raise FileNotFoundError(f"Fichier de référence {file_path} introuvable.")
-    with open(file_path, "r") as f:
-        return f.read().strip()
 
 
 def drop_unused_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -87,8 +75,11 @@ preprocessing_pipeline = Pipeline(
 def run_preprocessing():
     """Exécute le pipeline de preprocessing"""
     try:
-        input_csv = get_latest_file(LATEST_INGESTED_FILE)
-        output_csv = "data/preprocessed_data.csv"
+        # Lecture des chemins depuis params.yaml (section 'preprocessing')
+        with open("params.yaml", "r", encoding="utf-8") as f:
+            params = yaml.safe_load(f)["preprocessing"]
+        input_csv = params.get("input", "data/observations.csv")
+        output_csv = params.get("output", "data/preprocessed_data.csv")
 
         logger.info(f"Chargement des données depuis {input_csv}")
         df = pd.read_csv(input_csv, encoding="utf-8")
@@ -125,16 +116,10 @@ def run_preprocessing():
         df_final.insert(0, "SKU", sku_column.values)
         logger.info(f"Shape finale du DataFrame : {df_final.shape}")
 
-        # Sauvegarde du fichier prétraité
+        # Sauvegarde du fichier prétraité (versionné par la suite via DVC)
+        os.makedirs(os.path.dirname(output_csv), exist_ok=True)
         df_final.to_csv(output_csv, index=False, encoding="utf-8")
         logger.info(f"Données prétraitées sauvegardées dans {output_csv}")
-
-        # Versionnement via DVC
-        try:
-            subprocess.run(["dvc", "add", output_csv], check=True)
-            logger.info(f"Fichier versionné ajouté à DVC : {output_csv}")
-        except Exception as e:
-            logger.error(f"Erreur lors de l'ajout à DVC : {e}")
 
     except Exception as e:
         logger.error(f"Erreur dans le preprocessing : {e}")
