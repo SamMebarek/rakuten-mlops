@@ -1,0 +1,3 @@
+ingestion:
+  input: data/donnees_synthetiques.csv
+  output: data/observations.csv

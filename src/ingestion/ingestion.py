@@ -6,7 +6,7 @@ import logging
 import hashlib
 from datetime import datetime
 from typing import Optional
-import subprocess
+import yaml
 
 # Configuration du logging pour le module ingestion
 os.makedirs("logs", exist_ok=True)
@@ -39,7 +39,7 @@ def get_file_hash(file_path: str) -> str:
 def ingest_csv(input_path: str, output_path: Optional[str] = None) -> pd.DataFrame:
     """
     Importe un CSV depuis 'input_path' et renvoie un DataFrame.
-    Si 'output_path' est spécifié, le DataFrame est également réécrit dans ce fichier CSV.
+    Si 'output_path' est spécifié, le DataFrame est sauvegardé dans ce fichier CSV.
 
     Parameters
     ----------
@@ -72,7 +72,7 @@ def ingest_csv(input_path: str, output_path: Optional[str] = None) -> pd.DataFra
         raise ValueError(f"Erreur lors de la lecture du fichier CSV : {e}")
 
     if df.empty:
-        logging.warning(f"Le fichier {input_path} est vide.")
+        logging.error(f"Le fichier {input_path} est vide.")
         raise ValueError(f"Le fichier {input_path} est vide.")
 
     # Vérification de colonnes essentielles (à adapter si besoin)
@@ -86,18 +86,11 @@ def ingest_csv(input_path: str, output_path: Optional[str] = None) -> pd.DataFra
     file_hash = get_file_hash(input_path)
     logging.info(f"Hash du fichier ingéré : {file_hash}")
 
-    # Export sans ajout manuel de timestamp (seul DVC gère le versionnement)
     if output_path:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         df.to_csv(output_path, index=False, encoding="utf-8")
         logging.info(f"Fichier sauvegardé dans : {output_path} (shape={df.shape})")
-
-        # Intégration DVC : versionner le fichier ingéré
-        try:
-            subprocess.run(["dvc", "add", output_path], check=True)
-            logging.info(f"Fichier versionné ajouté à DVC : {output_path}")
-        except Exception as e:
-            logging.error(f"Erreur lors de l'ajout à DVC : {e}")
+        # Le versionnement du fichier sera géré par DVC via dvc.yaml
 
     return df
 
@@ -115,6 +108,9 @@ def run_ingestion(input_path: str, output_path: str):
 
 
 if __name__ == "__main__":
-    input_path = os.getenv("INPUT_CSV", "data/donnees_synthetiques.csv")
-    output_path = os.getenv("OUTPUT_CSV", "data/observations.csv")
+    # Chargement des paramètres depuis params.yaml (section 'ingestion')
+    with open("params.yaml", "r") as f:
+        params = yaml.safe_load(f)["ingestion"]
+    input_path = params.get("input", "data/donnees_synthetiques.csv")
+    output_path = params.get("output", "data/observations.csv")
     run_ingestion(input_path, output_path)
