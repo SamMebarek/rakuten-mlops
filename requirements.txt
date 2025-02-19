@@ -12,3 +12,4 @@ Requests==2.32.3
 scikit_learn==1.6.1
 scipy==1.15.2
 xgboost==2.1.4
+dagshub
