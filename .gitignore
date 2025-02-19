@@ -49,3 +49,4 @@ docker-compose.override.yml
 # fichiers de contrôle de version internes
 .idea/
 .vscode/
+/data
