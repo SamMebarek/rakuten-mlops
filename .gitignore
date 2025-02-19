@@ -1,9 +1,10 @@
 # fichiers de logs
-Logs/
+logs/
 *.log
 
 # données et artefacts générés
-Data/
+data/
+!data/*.dvc
 models/
 mlruns/
 *.csv
