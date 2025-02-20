@@ -1,4 +1,4 @@
-# src/api.py
+# src/app/app.py
 
 from fastapi import FastAPI, HTTPException
 import pandas as pd

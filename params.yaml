@@ -2,15 +2,15 @@
 
 ingestion:
   input: "data/donnees_synthetiques.csv"
-  output: "data/observations.csv"
+  output: "data/raw/ingested_data.csv"
 
 preprocessing:
   input: "data/observations.csv"
-  output: "data/preprocessed_data.csv"
+  output: "data/processed/preprocessed_data.csv"
 
 
 train:
-  input: "data/preprocessed_data.csv"
+  input: "data/processed/preprocessed_data.csv"
   mlflow_tracking_uri: "https://dagshub.com/SamMebarek/rakuten-mlops.mlflow"
   experiment_name: "DynamicPricing"
   test_size: 0.2

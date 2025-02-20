@@ -75,11 +75,11 @@ preprocessing_pipeline = Pipeline(
 def run_preprocessing():
     """Exécute le pipeline de preprocessing"""
     try:
-        # Lecture des chemins depuis params.yaml (section 'preprocessing')
+        # Lecture des chemins depuis params.yaml
         with open("params.yaml", "r", encoding="utf-8") as f:
             params = yaml.safe_load(f)["preprocessing"]
-        input_csv = params.get("input", "data/observations.csv")
-        output_csv = params.get("output", "data/preprocessed_data.csv")
+        input_csv = params.get("input", "data/raw/ingested_data.csv")
+        output_csv = params.get("output", "data/processed/preprocessed_data.csv")
 
         logger.info(f"Chargement des données depuis {input_csv}")
         df = pd.read_csv(input_csv, encoding="utf-8")
@@ -116,7 +116,7 @@ def run_preprocessing():
         df_final.insert(0, "SKU", sku_column.values)
         logger.info(f"Shape finale du DataFrame : {df_final.shape}")
 
-        # Sauvegarde du fichier prétraité (versionné par la suite via DVC)
+        # Sauvegarde du fichier prétraité
         os.makedirs(os.path.dirname(output_csv), exist_ok=True)
         df_final.to_csv(output_csv, index=False, encoding="utf-8")
         logger.info(f"Données prétraitées sauvegardées dans {output_csv}")

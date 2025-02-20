@@ -51,7 +51,7 @@ def main():
         train_params = config["train"]
 
         # Chemins et configuration MLflow
-        data_path = train_params.get("input", "data/preprocessed_data.csv")
+        data_path = train_params.get("input", "data/preprocess/preprocessed_data.csv")
         mlflow_uri = train_params.get("mlflow_tracking_uri", "http://127.0.0.1:8080")
         experiment_name = train_params.get("experiment_name", "DynamicPricing")
 

@@ -75,7 +75,7 @@ def ingest_csv(input_path: str, output_path: Optional[str] = None) -> pd.DataFra
         logging.error(f"Le fichier {input_path} est vide.")
         raise ValueError(f"Le fichier {input_path} est vide.")
 
-    # Vérification de colonnes essentielles (à adapter si besoin)
+    # Vérification de colonnes essentielles
     required_columns = ["SKU", "Prix"]
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
@@ -90,7 +90,6 @@ def ingest_csv(input_path: str, output_path: Optional[str] = None) -> pd.DataFra
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         df.to_csv(output_path, index=False, encoding="utf-8")
         logging.info(f"Fichier sauvegardé dans : {output_path} (shape={df.shape})")
-        # Le versionnement du fichier sera géré par DVC via dvc.yaml
 
     return df
 
@@ -108,9 +107,9 @@ def run_ingestion(input_path: str, output_path: str):
 
 
 if __name__ == "__main__":
-    # Chargement des paramètres depuis params.yaml (section 'ingestion')
+    # Chargement des paramètres depuis params.yaml
     with open("params.yaml", "r") as f:
         params = yaml.safe_load(f)["ingestion"]
     input_path = params.get("input", "data/donnees_synthetiques.csv")
-    output_path = params.get("output", "data/observations.csv")
+    output_path = params.get("output", "data/raw/ingested_data.csv")
     run_ingestion(input_path, output_path)
