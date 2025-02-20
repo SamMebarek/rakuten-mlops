@@ -1,0 +1,18 @@
+# dvc.yaml
+stages:
+  ingestion:
+    cmd: python src/ingestion/ingestion.py
+    deps:
+      - src/ingestion/ingestion.py
+      - data/donnees_synthetiques.csv
+      - params.yaml                   
+    outs:
+      - data/raw/ingested_data.csv    
+  preprocessing:
+    cmd: python src/preprocessing/preprocessing.py
+    deps:
+      - src/preprocessing/preprocessing.py
+      - data/raw/ingested_data.csv    
+      - params.yaml
+    outs:
+      - data/processed/preprocessed_data.csv

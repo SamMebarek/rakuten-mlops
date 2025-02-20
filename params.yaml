@@ -5,7 +5,7 @@ ingestion:
   output: "data/raw/ingested_data.csv"
 
 preprocessing:
-  input: "data/observations.csv"
+  input: "data/raw/ingested_data.csv"
   output: "data/processed/preprocessed_data.csv"
 
 
