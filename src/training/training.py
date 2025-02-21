@@ -46,25 +46,25 @@ def main():
         train_params = config["train"]
         model_config = config["model_config"]
 
-        # Chemins et configuration MLflow
-        data_path = train_params["input"]
+        # Configuration MLflow
         mlflow_uri = model_config["mlflow_tracking_uri"]
         experiment_name = model_config["mlflow_experiment_name"]
         model_name = model_config["mlflow_model_name"]
 
-        test_size = train_params["test_size"]
-        random_state = train_params["random_state"]
+        # Vérification et configuration de MLflow
+        if is_mlflow_active(mlflow_uri):
+            mlflow.set_tracking_uri(mlflow_uri)
+            mlflow.set_experiment(experiment_name)
+            logger.info("MLflow activé et configuré.")
+        else:
+            logger.warning("MLflow non accessible. Le training se fera sans tracking.")
 
-        logger.info(f"Chemin du CSV prétraité : {data_path}")
-        logger.info(
-            f"MLflow URI : {mlflow_uri}, Exp Name : {experiment_name}, Model Name : {model_name}"
-        )
-
+        # Chargement des données prétraitées
+        data_path = train_params["input"]
         if not os.path.exists(data_path):
             logger.error(f"Fichier prétraité introuvable : {data_path}")
             return
 
-        # Chargement des données prétraitées
         df = pd.read_csv(data_path)
         logger.info(f"Données prétraitées chargées : shape={df.shape}")
 
@@ -78,48 +78,50 @@ def main():
         X = X.apply(pd.to_numeric, errors="coerce").fillna(0)
 
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=random_state
+            X,
+            y,
+            test_size=train_params["test_size"],
+            random_state=train_params["random_state"],
         )
 
-        # Vérification et configuration de MLflow
-        if is_mlflow_active(mlflow_uri):
-            mlflow.set_tracking_uri(mlflow_uri)
-            mlflow.set_experiment(experiment_name)
-            logger.info("MLflow activé et configuré.")
-        else:
-            logger.warning("MLflow non accessible. Le training se fera sans tracking.")
-
-        # Récupération des hyperparamètres
-        dist_params = train_params.get("param_dist", {})
+        # Définition des hyperparamètres pour RandomizedSearchCV
+        dist_params = train_params["param_dist"]
         param_dist = {
             "n_estimators": randint(
                 dist_params["n_estimators_min"], dist_params["n_estimators_max"]
             ),
             "learning_rate": uniform(
-                0, dist_params["learning_rate_max"] - dist_params["learning_rate_min"]
+                dist_params["learning_rate_min"],
+                dist_params["learning_rate_max"] - dist_params["learning_rate_min"],
             ),
             "max_depth": randint(
                 dist_params["max_depth_min"], dist_params["max_depth_max"]
             ),
             "subsample": uniform(
-                0, dist_params["subsample_max"] - dist_params["subsample_min"]
+                dist_params["subsample_min"],
+                dist_params["subsample_max"] - dist_params["subsample_min"],
             ),
             "colsample_bytree": uniform(
-                0,
+                dist_params["colsample_bytree_min"],
                 dist_params["colsample_bytree_max"]
                 - dist_params["colsample_bytree_min"],
             ),
-            "gamma": uniform(0, dist_params["gamma_max"] - dist_params["gamma_min"]),
+            "gamma": uniform(
+                dist_params["gamma_min"],
+                dist_params["gamma_max"] - dist_params["gamma_min"],
+            ),
         }
 
         model_xgb = RandomizedSearchCV(
-            XGBRegressor(objective="reg:squarederror", random_state=random_state),
+            XGBRegressor(
+                objective="reg:squarederror", random_state=train_params["random_state"]
+            ),
             param_distributions=param_dist,
             n_iter=10,
             cv=3,
             verbose=1,
             n_jobs=-1,
-            random_state=random_state,
+            random_state=train_params["random_state"],
         )
 
         # Entraînement et log MLflow
@@ -147,9 +149,10 @@ def main():
                 X_train, model_xgb.best_estimator_.predict(X_train)
             )
 
+            model_path = "xgb_model"
             mlflow.sklearn.log_model(
                 sk_model=model_xgb.best_estimator_,
-                artifact_path="xgb_model",
+                artifact_path=model_path,
                 registered_model_name=model_name,
                 signature=signature,
                 input_example=input_example,
@@ -159,18 +162,24 @@ def main():
 
             # Ajout au Model Registry
             client = MlflowClient()
-            model_uri = f"runs:/{run.info.run_id}/xgb_model"
+            model_uri = f"runs:/{run.info.run_id}/{model_path}"
 
             try:
-                client.create_registered_model(model_name)
-            except mlflow.exceptions.MlflowException:
-                pass  # Le modèle existe déjà
+                # Vérifier si le modèle existe déjà avant de l'enregistrer
+                registered_models = [m.name for m in client.search_registered_models()]
+                if model_name not in registered_models:
+                    client.create_registered_model(model_name)
 
-            client.create_model_version(
-                name=model_name,
-                source=model_uri,
-                run_id=run.info.run_id,
-            )
+                # Créer une nouvelle version du modèle
+                client.create_model_version(
+                    name=model_name,
+                    source=model_uri,
+                    run_id=run.info.run_id,
+                )
+            except mlflow.exceptions.MlflowException as e:
+                logger.error(
+                    f"Erreur lors de l'ajout du modèle au Model Registry : {e}"
+                )
 
             print("\nRésumé de l'entraînement :")
             print(f"R² du modèle : {r2_xgb:.4f}")
