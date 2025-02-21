@@ -5,8 +5,8 @@ stages:
     deps:
     - path: data/donnees_synthetiques.csv
       hash: md5
-      md5: 5c75848aee64e025f7abf374a46144d8
-      size: 25865594
+      md5: 10e799deb4c5a91f0f1b93653583fe93
+      size: 25894537
     - path: params.yaml
       hash: md5
       md5: 8621795c5f1733fc395a477ffac373e4
@@ -18,15 +18,15 @@ stages:
     outs:
     - path: data/raw/ingested_data.csv
       hash: md5
-      md5: 5572029d8f463b8df0a8ae5e6bdfa587
-      size: 25460383
+      md5: c685ec98d70c4e9dc84c461647cb9f8e
+      size: 25488217
   preprocessing:
     cmd: python src/preprocessing/preprocessing.py
     deps:
     - path: data/raw/ingested_data.csv
       hash: md5
-      md5: 5572029d8f463b8df0a8ae5e6bdfa587
-      size: 25460383
+      md5: c685ec98d70c4e9dc84c461647cb9f8e
+      size: 25488217
     - path: params.yaml
       hash: md5
       md5: 8621795c5f1733fc395a477ffac373e4
@@ -38,15 +38,15 @@ stages:
     outs:
     - path: data/processed/preprocessed_data.csv
       hash: md5
-      md5: c4c2104b945dd097c1f8cc60945d3c63
-      size: 21274299
+      md5: 42f313f5c574ff922d21ba017ce1d1b4
+      size: 21298895
   training:
     cmd: python src/training/training.py
     deps:
     - path: data/processed/preprocessed_data.csv
       hash: md5
-      md5: c4c2104b945dd097c1f8cc60945d3c63
-      size: 21274299
+      md5: 42f313f5c574ff922d21ba017ce1d1b4
+      size: 21298895
     - path: params.yaml
       hash: md5
       md5: 8621795c5f1733fc395a477ffac373e4
