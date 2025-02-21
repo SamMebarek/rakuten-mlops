@@ -103,21 +103,25 @@ def main():
             ),
             "learning_rate": uniform(
                 dist_params.get("learning_rate_min", 0.01),
-                dist_params.get("learning_rate_max", 0.2),
+                dist_params.get("learning_rate_max", 0.2)
+                - dist_params.get("learning_rate_min", 0.01),
             ),
             "max_depth": randint(
                 dist_params.get("max_depth_min", 3), dist_params.get("max_depth_max", 7)
             ),
             "subsample": uniform(
                 dist_params.get("subsample_min", 0.6),
-                dist_params.get("subsample_max", 1.0),
+                dist_params.get("subsample_max", 1.0)
+                - dist_params.get("subsample_min", 0.6),
             ),
             "colsample_bytree": uniform(
                 dist_params.get("colsample_bytree_min", 0.6),
-                dist_params.get("colsample_bytree_max", 1.0),
+                dist_params.get("colsample_bytree_max", 1.0)
+                - dist_params.get("colsample_bytree_min", 0.6),
             ),
             "gamma": uniform(
-                dist_params.get("gamma_min", 0.0), dist_params.get("gamma_max", 0.3)
+                dist_params.get("gamma_min", 0.0),
+                dist_params.get("gamma_max", 0.3) - dist_params.get("gamma_min", 0.0),
             ),
         }
 
@@ -152,7 +156,7 @@ def main():
             mlflow.sklearn.log_model(
                 sk_model=model_xgb.best_estimator_,
                 artifact_path="xgb_model",
-                registered_model_name=model_name,  # 🔹 Enregistrement explicite
+                registered_model_name=model_name,
             )
 
             logger.info(f"Modèle enregistré sous le nom : {model_name}")
