@@ -1,4 +1,3 @@
-# dvc.yaml
 stages:
   ingestion:
     cmd: python src/ingestion/ingestion.py
@@ -8,6 +7,7 @@ stages:
       - params.yaml                   
     outs:
       - data/raw/ingested_data.csv    
+
   preprocessing:
     cmd: python src/preprocessing/preprocessing.py
     deps:
@@ -16,3 +16,11 @@ stages:
       - params.yaml
     outs:
       - data/processed/preprocessed_data.csv
+
+  training:
+    cmd: python src/training/training.py
+    deps:
+      - src/training/training.py
+      - data/processed/preprocessed_data.csv
+      - params.yaml
+    outs: [] 

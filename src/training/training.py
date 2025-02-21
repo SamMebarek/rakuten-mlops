@@ -1,5 +1,3 @@
-# src/training/training.py
-
 import logging
 import os
 import numpy as np
@@ -17,7 +15,7 @@ import yaml
 # Création du dossier logs si besoin
 os.makedirs("logs", exist_ok=True)
 
-# Configuration du logging pour le module training
+# Configuration du logging
 logging.basicConfig(
     filename=os.path.join("logs", "training.log"),
     level=logging.INFO,
@@ -51,16 +49,21 @@ def main():
         train_params = config["train"]
 
         # Chemins et configuration MLflow
-        data_path = train_params.get("input", "data/preprocess/preprocessed_data.csv")
-        mlflow_uri = train_params.get("mlflow_tracking_uri", "http://127.0.0.1:8080")
+        data_path = train_params.get("input", "data/processed/preprocessed_data.csv")
+        mlflow_uri = train_params.get(
+            "mlflow_tracking_uri", "https://dagshub.com/<user>/<repo>.mlflow"
+        )
         experiment_name = train_params.get("experiment_name", "DynamicPricing")
+        model_name = train_params.get("mlflow_model_name", "DynamicPricingModel")
 
         # b) Paramètres pour le split
         test_size = train_params.get("test_size", 0.2)
         random_state = train_params.get("random_state", 17)
 
         logger.info(f"Chemin du CSV prétraité : {data_path}")
-        logger.info(f"MLflow URI : {mlflow_uri}, Exp Name : {experiment_name}")
+        logger.info(
+            f"MLflow URI : {mlflow_uri}, Exp Name : {experiment_name}, Model Name : {model_name}"
+        )
 
         if not os.path.exists(data_path):
             logger.error(f"Fichier prétraité introuvable : {data_path}")
@@ -93,30 +96,29 @@ def main():
 
         # 5. Construction du param_dist depuis params.yaml
         dist_params = train_params.get("param_dist", {})
-        # Valeurs par défaut si certaines clés manquent
-        n_estimators_min = dist_params.get("n_estimators_min", 50)
-        n_estimators_max = dist_params.get("n_estimators_max", 200)
-        learning_rate_min = dist_params.get("learning_rate_min", 0.01)
-        learning_rate_max = dist_params.get("learning_rate_max", 0.2)
-        max_depth_min = dist_params.get("max_depth_min", 3)
-        max_depth_max = dist_params.get("max_depth_max", 7)
-        subsample_min = dist_params.get("subsample_min", 0.6)
-        subsample_max = dist_params.get("subsample_max", 1.0)
-        colsample_min = dist_params.get("colsample_bytree_min", 0.6)
-        colsample_max = dist_params.get("colsample_bytree_max", 1.0)
-        gamma_min = dist_params.get("gamma_min", 0.0)
-        gamma_max = dist_params.get("gamma_max", 0.3)
-
-        # Création du dictionnaire pour RandomizedSearchCV
         param_dist = {
-            "n_estimators": randint(n_estimators_min, n_estimators_max),
-            "learning_rate": uniform(
-                learning_rate_min, learning_rate_max - learning_rate_min
+            "n_estimators": randint(
+                dist_params.get("n_estimators_min", 50),
+                dist_params.get("n_estimators_max", 200),
             ),
-            "max_depth": randint(max_depth_min, max_depth_max),
-            "subsample": uniform(subsample_min, subsample_max - subsample_min),
-            "colsample_bytree": uniform(colsample_min, colsample_max - colsample_min),
-            "gamma": uniform(gamma_min, gamma_max - gamma_min),
+            "learning_rate": uniform(
+                dist_params.get("learning_rate_min", 0.01),
+                dist_params.get("learning_rate_max", 0.2),
+            ),
+            "max_depth": randint(
+                dist_params.get("max_depth_min", 3), dist_params.get("max_depth_max", 7)
+            ),
+            "subsample": uniform(
+                dist_params.get("subsample_min", 0.6),
+                dist_params.get("subsample_max", 1.0),
+            ),
+            "colsample_bytree": uniform(
+                dist_params.get("colsample_bytree_min", 0.6),
+                dist_params.get("colsample_bytree_max", 1.0),
+            ),
+            "gamma": uniform(
+                dist_params.get("gamma_min", 0.0), dist_params.get("gamma_max", 0.3)
+            ),
         }
 
         model_xgb = RandomizedSearchCV(
@@ -130,11 +132,7 @@ def main():
         )
 
         # 6. Entraînement et log MLflow
-        with (
-            mlflow.start_run(run_name="XGBoost_RandSearch")
-            if is_mlflow_active(mlflow_uri)
-            else open(os.devnull, "w")
-        ):
+        with mlflow.start_run(run_name="XGBoost_RandSearch"):
             logger.info("Démarrage de la recherche d'hyperparamètres XGB")
             model_xgb.fit(X_train, y_train)
 
@@ -150,15 +148,14 @@ def main():
             for param_name, param_value in best_params.items():
                 mlflow.log_param(param_name, param_value)
 
-            # Log du modèle dans MLflow (artifact_path = "xgb_model")
+            # Log du modèle dans MLflow
             mlflow.sklearn.log_model(
-                model_xgb.best_estimator_,
+                sk_model=model_xgb.best_estimator_,
                 artifact_path="xgb_model",
-                registered_model_name="MyXGBModel",  # Optionnel, pour le Model Registry
+                registered_model_name=model_name,  # 🔹 Enregistrement explicite
             )
 
-            # MLflow log
-            logger.info("Modèle loggé dans MLflow.")
+            logger.info(f"Modèle enregistré sous le nom : {model_name}")
 
             print("\nRésumé de l'entraînement :")
             print(f"R² du modèle : {r2_xgb:.4f}")

@@ -29,3 +29,13 @@ train:
     colsample_bytree_max: 1.0
     gamma_min: 0.0
     gamma_max: 0.3
+
+data:
+  dvc_path: "s3://dvc" 
+  dvc_endpoint: "https://dagshub.com/SamMebarek/rakuten-mlops.s3"  
+  processed_file: "data/processed/preprocessed_data.csv" 
+
+model_config:
+  mlflow_tracking_uri: "https://dagshub.com/SamMebarek/rakuten-mlops.mlflow"  
+  mlflow_experiment_name: "DynamicPricing"  
+  mlflow_model_name: "BestModel" 

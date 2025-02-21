@@ -9,8 +9,8 @@ stages:
       size: 25865594
     - path: params.yaml
       hash: md5
-      md5: d3f0d0a04e7961ba77413548aa074c9d
-      size: 753
+      md5: 8621795c5f1733fc395a477ffac373e4
+      size: 1091
     - path: src/ingestion/ingestion.py
       hash: md5
       md5: aa4f6c76b04dc7ef4dd9040d3cf6a9e9
@@ -29,8 +29,8 @@ stages:
       size: 25460383
     - path: params.yaml
       hash: md5
-      md5: d3f0d0a04e7961ba77413548aa074c9d
-      size: 753
+      md5: 8621795c5f1733fc395a477ffac373e4
+      size: 1091
     - path: src/preprocessing/preprocessing.py
       hash: md5
       md5: 605635befe4146daf7b06065519aec18
@@ -40,3 +40,18 @@ stages:
       hash: md5
       md5: c4c2104b945dd097c1f8cc60945d3c63
       size: 21274299
+  training:
+    cmd: python src/training/training.py
+    deps:
+    - path: data/processed/preprocessed_data.csv
+      hash: md5
+      md5: c4c2104b945dd097c1f8cc60945d3c63
+      size: 21274299
+    - path: params.yaml
+      hash: md5
+      md5: 8621795c5f1733fc395a477ffac373e4
+      size: 1091
+    - path: src/training/training.py
+      hash: md5
+      md5: 1ea1a2375e8a90eae0d2b2eefaef124f
+      size: 6194
