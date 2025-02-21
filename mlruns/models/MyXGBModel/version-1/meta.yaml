@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1739966846667
+current_stage: None
+description: null
+last_updated_timestamp: 1739966846667
+name: MyXGBModel
+run_id: fa46210688b94bd38c805fe491fd7e81
+run_link: null
+source: file:///C:/Users/samir/Desktop/rakuten-mlops/mlruns/0/fa46210688b94bd38c805fe491fd7e81/artifacts/xgb_model
+status: READY
+status_message: null
+storage_location: file:///C:/Users/samir/Desktop/rakuten-mlops/mlruns/0/fa46210688b94bd38c805fe491fd7e81/artifacts/xgb_model
+user_id: null
+version: 1

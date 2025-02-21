@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/samir/Desktop/rakuten-mlops/mlruns/0/fa46210688b94bd38c805fe491fd7e81/artifacts
+end_time: 1739966847693
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: fa46210688b94bd38c805fe491fd7e81
+run_name: nimble-wren-682
+run_uuid: fa46210688b94bd38c805fe491fd7e81
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1739966829705
+status: 3
+tags: []
+user_id: samir

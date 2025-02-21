@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1740031298017
+current_stage: None
+description: null
+last_updated_timestamp: 1740031298017
+name: MyXGBModel
+run_id: cfd15aecb1814a45bf364cd06203e649
+run_link: null
+source: file:///C:/Users/samir/Desktop/rakuten-mlops/mlruns/0/cfd15aecb1814a45bf364cd06203e649/artifacts/xgb_model
+status: READY
+status_message: null
+storage_location: file:///C:/Users/samir/Desktop/rakuten-mlops/mlruns/0/cfd15aecb1814a45bf364cd06203e649/artifacts/xgb_model
+user_id: null
+version: 2

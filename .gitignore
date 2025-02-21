@@ -5,8 +5,6 @@ logs/
 # données et artefacts générés
 data/
 !data/*.dvc
-models/
-mlruns/
 *.csv
 *.json
 *.txt

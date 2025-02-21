@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/samir/Desktop/rakuten-mlops/mlruns/0/cfd15aecb1814a45bf364cd06203e649/artifacts
+end_time: 1740031298963
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: cfd15aecb1814a45bf364cd06203e649
+run_name: wise-elk-215
+run_uuid: cfd15aecb1814a45bf364cd06203e649
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1740031285306
+status: 3
+tags: []
+user_id: samir
