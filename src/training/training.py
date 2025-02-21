@@ -11,6 +11,8 @@ import mlflow
 import mlflow.sklearn
 import requests
 import yaml
+from mlflow.tracking import MlflowClient
+from mlflow.models import infer_signature
 
 # Création du dossier logs si besoin
 os.makedirs("logs", exist_ok=True)
@@ -25,9 +27,7 @@ logger = logging.getLogger("training")
 
 
 def is_mlflow_active(mlflow_uri: str, timeout: int = 3) -> bool:
-    """
-    Vérifie si le serveur MLflow spécifié est actif.
-    """
+    """Vérifie si le serveur MLflow est actif."""
     try:
         response = requests.get(
             f"{mlflow_uri}/api/2.0/mlflow/experiments/list", timeout=timeout
@@ -38,27 +38,22 @@ def is_mlflow_active(mlflow_uri: str, timeout: int = 3) -> bool:
 
 
 def main():
-    """
-    Pipeline d'entraînement XGBoost avec versioning MLflow.
-
-    """
+    """Pipeline d'entraînement XGBoost avec versioning MLflow."""
     try:
         # Lecture des paramètres depuis params.yaml
         with open("params.yaml", "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
         train_params = config["train"]
+        model_config = config["model_config"]
 
         # Chemins et configuration MLflow
-        data_path = train_params.get("input", "data/processed/preprocessed_data.csv")
-        mlflow_uri = train_params.get(
-            "mlflow_tracking_uri", "https://dagshub.com/<user>/<repo>.mlflow"
-        )
-        experiment_name = train_params.get("experiment_name", "DynamicPricing")
-        model_name = train_params.get("mlflow_model_name", "DynamicPricingModel")
+        data_path = train_params["input"]
+        mlflow_uri = model_config["mlflow_tracking_uri"]
+        experiment_name = model_config["mlflow_experiment_name"]
+        model_name = model_config["mlflow_model_name"]
 
-        # b) Paramètres pour le split
-        test_size = train_params.get("test_size", 0.2)
-        random_state = train_params.get("random_state", 17)
+        test_size = train_params["test_size"]
+        random_state = train_params["random_state"]
 
         logger.info(f"Chemin du CSV prétraité : {data_path}")
         logger.info(
@@ -69,7 +64,7 @@ def main():
             logger.error(f"Fichier prétraité introuvable : {data_path}")
             return
 
-        # 2. Chargement des données prétraitées
+        # Chargement des données prétraitées
         df = pd.read_csv(data_path)
         logger.info(f"Données prétraitées chargées : shape={df.shape}")
 
@@ -77,7 +72,7 @@ def main():
             logger.error("La colonne 'Prix' est manquante dans le DataFrame.")
             return
 
-        # 3. Séparation X / y (on retire Prix, SKU, Timestamp)
+        # Séparation X / y (on retire Prix, SKU, Timestamp)
         y = df["Prix"].values
         X = df.drop(columns=["Prix", "SKU", "Timestamp"], errors="ignore")
         X = X.apply(pd.to_numeric, errors="coerce").fillna(0)
@@ -86,7 +81,7 @@ def main():
             X, y, test_size=test_size, random_state=random_state
         )
 
-        # 4. Configuration de MLflow
+        # Vérification et configuration de MLflow
         if is_mlflow_active(mlflow_uri):
             mlflow.set_tracking_uri(mlflow_uri)
             mlflow.set_experiment(experiment_name)
@@ -94,35 +89,27 @@ def main():
         else:
             logger.warning("MLflow non accessible. Le training se fera sans tracking.")
 
-        # 5. Construction du param_dist depuis params.yaml
+        # Récupération des hyperparamètres
         dist_params = train_params.get("param_dist", {})
         param_dist = {
             "n_estimators": randint(
-                dist_params.get("n_estimators_min", 50),
-                dist_params.get("n_estimators_max", 200),
+                dist_params["n_estimators_min"], dist_params["n_estimators_max"]
             ),
             "learning_rate": uniform(
-                dist_params.get("learning_rate_min", 0.01),
-                dist_params.get("learning_rate_max", 0.2)
-                - dist_params.get("learning_rate_min", 0.01),
+                0, dist_params["learning_rate_max"] - dist_params["learning_rate_min"]
             ),
             "max_depth": randint(
-                dist_params.get("max_depth_min", 3), dist_params.get("max_depth_max", 7)
+                dist_params["max_depth_min"], dist_params["max_depth_max"]
             ),
             "subsample": uniform(
-                dist_params.get("subsample_min", 0.6),
-                dist_params.get("subsample_max", 1.0)
-                - dist_params.get("subsample_min", 0.6),
+                0, dist_params["subsample_max"] - dist_params["subsample_min"]
             ),
             "colsample_bytree": uniform(
-                dist_params.get("colsample_bytree_min", 0.6),
-                dist_params.get("colsample_bytree_max", 1.0)
-                - dist_params.get("colsample_bytree_min", 0.6),
+                0,
+                dist_params["colsample_bytree_max"]
+                - dist_params["colsample_bytree_min"],
             ),
-            "gamma": uniform(
-                dist_params.get("gamma_min", 0.0),
-                dist_params.get("gamma_max", 0.3) - dist_params.get("gamma_min", 0.0),
-            ),
+            "gamma": uniform(0, dist_params["gamma_max"] - dist_params["gamma_min"]),
         }
 
         model_xgb = RandomizedSearchCV(
@@ -135,8 +122,8 @@ def main():
             random_state=random_state,
         )
 
-        # 6. Entraînement et log MLflow
-        with mlflow.start_run(run_name="XGBoost_RandSearch"):
+        # Entraînement et log MLflow
+        with mlflow.start_run(run_name="XGBoost_RandSearch") as run:
             logger.info("Démarrage de la recherche d'hyperparamètres XGB")
             model_xgb.fit(X_train, y_train)
 
@@ -153,13 +140,37 @@ def main():
                 mlflow.log_param(param_name, param_value)
 
             # Log du modèle dans MLflow
+            input_example = X_test.iloc[
+                :1
+            ]  # Extrait un exemple pour faciliter l'inférence
+            signature = infer_signature(
+                X_train, model_xgb.best_estimator_.predict(X_train)
+            )
+
             mlflow.sklearn.log_model(
                 sk_model=model_xgb.best_estimator_,
                 artifact_path="xgb_model",
                 registered_model_name=model_name,
+                signature=signature,
+                input_example=input_example,
             )
 
             logger.info(f"Modèle enregistré sous le nom : {model_name}")
+
+            # Ajout au Model Registry
+            client = MlflowClient()
+            model_uri = f"runs:/{run.info.run_id}/xgb_model"
+
+            try:
+                client.create_registered_model(model_name)
+            except mlflow.exceptions.MlflowException:
+                pass  # Le modèle existe déjà
+
+            client.create_model_version(
+                name=model_name,
+                source=model_uri,
+                run_id=run.info.run_id,
+            )
 
             print("\nRésumé de l'entraînement :")
             print(f"R² du modèle : {r2_xgb:.4f}")
