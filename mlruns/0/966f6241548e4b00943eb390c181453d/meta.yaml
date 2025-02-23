@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/samir/Desktop/rakuten-mlops/mlruns/0/966f6241548e4b00943eb390c181453d/artifacts
+end_time: 1740293792461
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 966f6241548e4b00943eb390c181453d
+run_name: XGBoost_RandSearch
+run_uuid: 966f6241548e4b00943eb390c181453d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1740293755135
+status: 3
+tags: []
+user_id: samir

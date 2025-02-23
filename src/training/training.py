@@ -1,3 +1,5 @@
+# src/training/training.py
+
 import logging
 import os
 import numpy as np
@@ -26,14 +28,53 @@ logging.basicConfig(
 logger = logging.getLogger("training")
 
 
+# def is_mlflow_active(mlflow_uri: str, timeout: int = 3) -> bool:
+#     """Vérifie si le serveur MLflow est actif."""
+#     try:
+#         response = requests.get(
+#             f"{mlflow_uri}/api/2.0/mlflow/experiments/list", timeout=timeout
+#         )
+#         return response.status_code == 200
+#     except requests.exceptions.RequestException:
+#         return False
+
+from urllib.parse import urlparse
+import requests
+import logging
+
+logger = logging.getLogger("training")
+
+
 def is_mlflow_active(mlflow_uri: str, timeout: int = 3) -> bool:
-    """Vérifie si le serveur MLflow est actif."""
+    """
+    Vérifie si le serveur MLflow est actif en utilisant les identifiants présents dans l'URI.
+    La fonction extrait le nom d'utilisateur et le token (mot de passe) si disponibles,
+    reconstruit l'URI sans ces informations pour la requête et utilise l'authentification HTTP Basic.
+    """
     try:
+        # Extraction des informations d'authentification depuis l'URI
+        parsed_uri = urlparse(mlflow_uri)
+        auth = None
+        if parsed_uri.username and parsed_uri.password:
+            auth = (parsed_uri.username, parsed_uri.password)
+            # Recomposer l'URI sans les informations d'authentification
+            netloc = parsed_uri.hostname
+            if parsed_uri.port:
+                netloc += f":{parsed_uri.port}"
+            sanitized_uri = f"{parsed_uri.scheme}://{netloc}{parsed_uri.path}"
+        else:
+            sanitized_uri = mlflow_uri
+
+        # Envoi de la requête avec authentification si disponible
         response = requests.get(
-            f"{mlflow_uri}/api/2.0/mlflow/experiments/list", timeout=timeout
+            f"{sanitized_uri}/api/2.0/mlflow/experiments/list",
+            timeout=timeout,
+            auth=auth,
         )
+        logger.info(f"Vérification MLflow, code HTTP reçu : {response.status_code}")
         return response.status_code == 200
-    except requests.exceptions.RequestException:
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Erreur lors de la vérification de MLflow: {e}")
         return False
 
 
@@ -141,40 +182,87 @@ def main():
             for param_name, param_value in best_params.items():
                 mlflow.log_param(param_name, param_value)
 
-            # Log du modèle dans MLflow
-            input_example = X_test.iloc[
-                :1
-            ]  # Extrait un exemple pour faciliter l'inférence
+            # # Log du modèle dans MLflow
+            # input_example = X_test.iloc[
+            #     :1
+            # ]  # Extrait un exemple pour faciliter l'inférence
+            # signature = infer_signature(
+            #     X_train, model_xgb.best_estimator_.predict(X_train)
+            # )
+
+            # model_path = "xgb_model"
+            # mlflow.sklearn.log_model(
+            #     sk_model=model_xgb.best_estimator_,
+            #     artifact_path=model_path,
+            #     registered_model_name=model_name,
+            #     signature=signature,
+            #     input_example=input_example,
+            # )
+
+            # logger.info(f"Modèle enregistré sous le nom : {model_name}")
+
+            # # Ajout au Model Registry
+            # client = MlflowClient()
+            # model_uri = f"runs:/{run.info.run_id}/{model_path}"
+
+            # try:
+            #     # Vérifier si le modèle existe déjà avant de l'enregistrer
+            #     registered_models = [m.name for m in client.search_registered_models()]
+            #     if model_name not in registered_models:
+            #         client.create_registered_model(model_name)
+
+            #     # Créer une nouvelle version du modèle
+            #     client.create_model_version(
+            #         name=model_name,
+            #         source=model_uri,
+            #         run_id=run.info.run_id,
+            #     )
+            # except mlflow.exceptions.MlflowException as e:
+            #     logger.error(
+            #         f"Erreur lors de l'ajout du modèle au Model Registry : {e}"
+            #     )
+
+            # Log du modèle dans MLflow avec gestion des erreurs
+            input_example = X_test.iloc[:1]  # Exemple pour faciliter l'inférence
             signature = infer_signature(
                 X_train, model_xgb.best_estimator_.predict(X_train)
             )
-
             model_path = "xgb_model"
-            mlflow.sklearn.log_model(
-                sk_model=model_xgb.best_estimator_,
-                artifact_path=model_path,
-                registered_model_name=model_name,
-                signature=signature,
-                input_example=input_example,
-            )
 
-            logger.info(f"Modèle enregistré sous le nom : {model_name}")
+            try:
+                mlflow.sklearn.log_model(
+                    sk_model=model_xgb.best_estimator_,
+                    artifact_path=model_path,
+                    registered_model_name=model_name,
+                    signature=signature,
+                    input_example=input_example,
+                )
+                logger.info(f"Modèle enregistré sous le nom : {model_name}")
+            except Exception as e:
+                logger.error(
+                    f"Erreur lors de l'enregistrement du modèle avec mlflow.sklearn.log_model : {e}"
+                )
+                raise
 
-            # Ajout au Model Registry
+            # Ajout du modèle au Model Registry avec vérification et gestion des exceptions
             client = MlflowClient()
             model_uri = f"runs:/{run.info.run_id}/{model_path}"
 
             try:
-                # Vérifier si le modèle existe déjà avant de l'enregistrer
+                # Vérifier si le modèle existe déjà dans le registry
                 registered_models = [m.name for m in client.search_registered_models()]
                 if model_name not in registered_models:
                     client.create_registered_model(model_name)
+                    logger.info(f"Modèle '{model_name}' créé dans le registry.")
 
                 # Créer une nouvelle version du modèle
-                client.create_model_version(
+                new_version = client.create_model_version(
                     name=model_name,
                     source=model_uri,
                     run_id=run.info.run_id,
+                )
+                logger.info(
+                    f"Nouvelle version du modèle créée : Version {new_version.version}"
                 )
             except mlflow.exceptions.MlflowException as e:
                 logger.error(
