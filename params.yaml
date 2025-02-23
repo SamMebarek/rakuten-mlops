@@ -72,9 +72,10 @@ train:
     gamma_max: 0.3
 
 data:
-  dvc_path: "s3://dvc" 
-  dvc_endpoint: "https://dagshub.com/SamMebarek/rakuten-mlops.s3"  
-  processed_file: "data/processed/preprocessed_data.csv" 
+  dvc_path: "s3://dvc"
+  processed_file: "data/processed/preprocessed_data.csv"
+  dvc_endpoint: "https://dagshub.com/SamMebarek/rakuten-mlops.s3"
+
 
 model_config:
   # Utilisation de la même URI authentifiée pour le suivi MLflow
