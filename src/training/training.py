@@ -10,6 +10,16 @@ import mlflow
 import mlflow.sklearn
 import yaml
 from mlflow.models import infer_signature
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import yaml
+
+with open("params.yaml", "r", encoding="utf-8") as f:
+    config = yaml.safe_load(f)
+config = os.path.expandvars(str(config))
+config = yaml.safe_load(config)
 
 # Configuration du logging local
 os.makedirs("logs", exist_ok=True)

@@ -1,0 +1,6 @@
+artifact_location: file:C:/Users/samir/Desktop/rakuten-mlops/${MLFLOW_TRACKING_URI}/430307742026791296
+creation_time: 1740310425169
+experiment_id: '430307742026791296'
+last_update_time: 1740310425169
+lifecycle_stage: active
+name: DynamicPricing

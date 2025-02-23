@@ -8,6 +8,16 @@ import s3fs
 import mlflow.pyfunc
 from datetime import datetime
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import yaml
+
+with open("params.yaml", "r", encoding="utf-8") as f:
+    config = yaml.safe_load(f)
+config = os.path.expandvars(str(config))
+config = yaml.safe_load(config)
 
 # Chargement des paramètres globaux
 with open("params.yaml", "r") as f:

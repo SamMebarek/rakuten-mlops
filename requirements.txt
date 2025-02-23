@@ -7,10 +7,7 @@ pandas==2.2.3
 pydantic==2.10.6
 pytest==8.3.4
 PyYAML==6.0.2
-PyYAML==6.0.2
-Requests==2.32.3
+s3fs==2025.2.0
 scikit_learn==1.6.1
 scipy==1.15.2
 xgboost==2.1.4
-dagshub
-dvc

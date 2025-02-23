@@ -1,47 +1,3 @@
-# params.yaml
-
-# ingestion:
-#   input: "data/donnees_synthetiques.csv"
-#   output: "data/raw/ingested_data.csv"
-
-# preprocessing:
-#   input: "data/raw/ingested_data.csv"
-#   output: "data/processed/preprocessed_data.csv"
-
-
-# train:
-#   input: "data/processed/preprocessed_data.csv"
-#   mlflow_tracking_uri: "https://dagshub.com/SamMebarek/rakuten-mlops.mlflow"
-#   experiment_name: "DynamicPricing"
-#   test_size: 0.2
-#   random_state: 17
-
-#   param_dist:
-#     n_estimators_min: 50
-#     n_estimators_max: 200
-#     learning_rate_min: 0.01
-#     learning_rate_max: 0.2
-#     max_depth_min: 3
-#     max_depth_max: 7
-#     subsample_min: 0.6
-#     subsample_max: 1.0
-#     colsample_bytree_min: 0.6
-#     colsample_bytree_max: 1.0
-#     gamma_min: 0.0
-#     gamma_max: 0.3
-
-# data:
-#   dvc_path: "s3://dvc" 
-#   dvc_endpoint: "https://dagshub.com/SamMebarek/rakuten-mlops.s3"  
-#   processed_file: "data/processed/preprocessed_data.csv" 
-
-# model_config:
-#   mlflow_tracking_uri: "https://dagshub.com/SamMebarek/rakuten-mlops.mlflow"  
-#   mlflow_experiment_name: "DynamicPricing"  
-#   mlflow_model_name: "BestModel" 
-
-
-
 ingestion:
   input: "data/donnees_synthetiques.csv"
   output: "data/raw/ingested_data.csv"
@@ -52,8 +8,7 @@ preprocessing:
 
 train:
   input: "data/processed/preprocessed_data.csv"
-  # Intégration du token dans l'URI (remplacez <username> et <token> par vos identifiants réels)
-  mlflow_tracking_uri: "https://SamMebarek:75fd9b55d2e2f7211829b26da01ef4516a5121c7@dagshub.com/SamMebarek/rakuten-mlops.mlflow"
+  mlflow_tracking_uri: "${MLFLOW_TRACKING_URI}"  # variable d'environnement
   experiment_name: "DynamicPricing"
   test_size: 0.2
   random_state: 17
@@ -76,9 +31,7 @@ data:
   processed_file: "data/processed/preprocessed_data.csv"
   dvc_endpoint: "https://dagshub.com/SamMebarek/rakuten-mlops.s3"
 
-
 model_config:
-  # Utilisation de la même URI authentifiée pour le suivi MLflow
-  mlflow_tracking_uri: "https://SamMebarek:75fd9b55d2e2f7211829b26da01ef4516a5121c7@dagshub.com/SamMebarek/rakuten-mlops.mlflow"  
-  mlflow_experiment_name: "DynamicPricing"  
-  mlflow_model_name: "BestModel" 
+  mlflow_tracking_uri: "${MLFLOW_TRACKING_URI}"
+  mlflow_experiment_name: "DynamicPricing"
+  mlflow_model_name: "BestModel"
