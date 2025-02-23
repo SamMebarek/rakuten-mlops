@@ -56,7 +56,7 @@ L’interface MLflow est accessible sur **[http://127.0.0.1:8080](http://127.0.0
 #### **4. Lancer l'API**
 
 ```bash
-uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
+uvicorn src.app.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 L'API est maintenant accessible sur **[http://127.0.0.1:8000](http://127.0.0.1:8000)**.
