@@ -11,3 +11,4 @@ s3fs==2025.2.0
 scikit_learn==1.6.1
 scipy==1.15.2
 xgboost==2.1.4
+dvc==3.59.1

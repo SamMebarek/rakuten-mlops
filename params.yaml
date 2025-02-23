@@ -8,7 +8,7 @@ preprocessing:
 
 train:
   input: "data/processed/preprocessed_data.csv"
-  mlflow_tracking_uri: "${MLFLOW_TRACKING_URI}"  # variable d'environnement
+  mlflow_tracking_uri: ${MLFLOW_TRACKING_URI}  # variable d'environnement
   experiment_name: "DynamicPricing"
   test_size: 0.2
   random_state: 17
@@ -32,6 +32,6 @@ data:
   dvc_endpoint: "https://dagshub.com/SamMebarek/rakuten-mlops.s3"
 
 model_config:
-  mlflow_tracking_uri: "${MLFLOW_TRACKING_URI}"
+  mlflow_tracking_uri: ${MLFLOW_TRACKING_URI}
   mlflow_experiment_name: "DynamicPricing"
   mlflow_model_name: "BestModel"

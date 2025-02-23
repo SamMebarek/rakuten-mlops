@@ -10,30 +10,47 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
+# Charger les variables d'environnement
 load_dotenv()
 
-import yaml
-
+# Charger les paramètres depuis params.yaml
 with open("params.yaml", "r", encoding="utf-8") as f:
     config = yaml.safe_load(f)
-config = os.path.expandvars(str(config))
-config = yaml.safe_load(config)
 
-# Chargement des paramètres globaux
-with open("params.yaml", "r") as f:
-    params = yaml.safe_load(f)
-
-# Configuration des données (seconde approche)
-DVC_BUCKET_PATH = params["data"]["dvc_path"]  # ex: "s3://dvc"
-DVC_RELATIVE_PATH = params["data"][
-    "processed_file"
-]  # ex: "data/processed/preprocessed_data.csv"
-DVC_S3_ENDPOINT = params["data"]["dvc_endpoint"]
+# Remplacement des variables d'environnement
+for section in config:
+    if isinstance(config[section], dict):
+        for key, value in config[section].items():
+            if isinstance(value, str) and "${" in value:
+                env_var = value.strip("${}").strip()
+                if env_var in os.environ:
+                    config[section][key] = os.getenv(env_var)
 
 # Configuration MLflow
-MLFLOW_TRACKING_URI = params["model_config"]["mlflow_tracking_uri"]
-MLFLOW_EXPERIMENT = params["model_config"]["mlflow_experiment_name"]
-MLFLOW_MODEL_NAME = params["model_config"]["mlflow_model_name"]
+MLFLOW_TRACKING_URI = config["model_config"]["mlflow_tracking_uri"]
+MLFLOW_EXPERIMENT = config["model_config"]["mlflow_experiment_name"]
+MLFLOW_MODEL_NAME = config["model_config"]["mlflow_model_name"]
+
+# Vérification et forçage de MLflow
+if not MLFLOW_TRACKING_URI.startswith("http"):
+    raise ValueError(f"🚨 ERREUR : MLFLOW_TRACKING_URI invalide")
+
+print(f"MLflow va utiliser l'URI")
+
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+mlflow.set_registry_uri(MLFLOW_TRACKING_URI)
+
+# Vérification que l'URI est bien prise en compte
+assert (
+    mlflow.get_tracking_uri() == MLFLOW_TRACKING_URI
+), "MLflow n'a pas pris l'URI en compte"
+
+# Configuration des données
+DVC_BUCKET_PATH = config["data"]["dvc_path"]
+DVC_RELATIVE_PATH = config["data"][
+    "processed_file"
+]  # ex: "data/processed/preprocessed_data.csv"
+DVC_S3_ENDPOINT = config["data"]["dvc_endpoint"]
 
 # Configuration du logging
 logging.basicConfig(
@@ -47,6 +64,7 @@ app = FastAPI()
 # Récupération des credentials AWS depuis les variables d'environnement
 aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+
 if not aws_access_key_id or not aws_secret_access_key:
     logger.error(
         "Les variables d'environnement AWS_ACCESS_KEY_ID ou AWS_SECRET_ACCESS_KEY ne sont pas définies."
@@ -68,7 +86,6 @@ def load_data():
     Si le fichier existe localement (selon DVC_RELATIVE_PATH), il est chargé depuis le système de fichiers local.
     Sinon, le fichier est recherché sur S3 en combinant DVC_BUCKET_PATH et DVC_RELATIVE_PATH.
     """
-    # Tentative de chargement local
     if os.path.exists(DVC_RELATIVE_PATH):
         try:
             df = pd.read_csv(DVC_RELATIVE_PATH)
@@ -77,9 +94,8 @@ def load_data():
         except Exception as e:
             logger.error(f"Erreur lors du chargement local des données : {e}")
 
-    # Si le fichier n'est pas trouvé localement, tenter de le charger depuis S3
     try:
-        full_path = DVC_BUCKET_PATH.rstrip("/") + "/" + DVC_RELATIVE_PATH.lstrip("/")
+        full_path = f"{DVC_BUCKET_PATH.rstrip('/')}/{DVC_RELATIVE_PATH.lstrip('/')}"
         with fs.open(full_path, "rb") as f:
             df = pd.read_csv(f)
         logger.info(f"Données chargées avec succès depuis {full_path}")
@@ -92,10 +108,9 @@ def load_data():
 def load_latest_model():
     """Charge le modèle depuis MLflow/DagsHub"""
     try:
-        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
         model_uri = f"models:/{MLFLOW_MODEL_NAME}/latest"
         model = mlflow.pyfunc.load_model(model_uri)
-        logger.info(f"Modèle chargé avec succès depuis MLflow : {model_uri}")
+        logger.info(f"Modèle chargé avec succès depuis MLflow")
         return model
     except Exception as e:
         logger.error(f"Erreur lors du chargement du modèle depuis MLflow : {e}")
@@ -170,7 +185,6 @@ def predict(request: PredictionRequest):
     )
 
     feature_values = pd.concat([sku_data_mean.to_frame().T, new_values], axis=1)
-    # Convertir les colonnes entières attendues en int64 (après arrondi)
     for col in ["AgeProduitEnJours", "QuantiteVendue"]:
         if col in feature_values.columns:
             feature_values[col] = feature_values[col].round(0).astype("int64")
@@ -190,7 +204,6 @@ def predict(request: PredictionRequest):
             detail="Les features ne correspondent pas à celles attendues.",
         )
 
-    # On passe directement le DataFrame à model.predict pour conserver les noms des colonnes
     predicted_price = float(model.predict(feature_values)[0])
     return PredictionResponse(
         sku=request.sku,

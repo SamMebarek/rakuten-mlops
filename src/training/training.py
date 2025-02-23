@@ -12,16 +12,40 @@ import yaml
 from mlflow.models import infer_signature
 from dotenv import load_dotenv
 
+# Charger les variables d'environnement
 load_dotenv()
 
-import yaml
-
+# Charger les paramètres depuis params.yaml
 with open("params.yaml", "r", encoding="utf-8") as f:
     config = yaml.safe_load(f)
-config = os.path.expandvars(str(config))
-config = yaml.safe_load(config)
 
-# Configuration du logging local
+# Remplacement propre des variables d'environnement
+for section in config:
+    if isinstance(config[section], dict):
+        for key, value in config[section].items():
+            if isinstance(value, str) and "${" in value:
+                env_var = value.strip("${}").strip()
+                if env_var in os.environ:
+                    config[section][key] = os.getenv(env_var)
+
+# Vérification et forçage de MLflow
+mlflow_tracking_uri = config["model_config"]["mlflow_tracking_uri"]
+if not mlflow_tracking_uri.startswith("http"):
+    raise ValueError(f"ERREUR : MLFLOW_TRACKING_URI invalide")
+
+print(f"MLflow va utiliser L'URI)
+
+mlflow.set_tracking_uri(mlflow_tracking_uri)
+mlflow.set_registry_uri(mlflow_tracking_uri)
+
+# Vérification que l'URI est bien prise en compte
+assert (
+    mlflow.get_tracking_uri() == mlflow_tracking_uri
+), "MLflow n'a pas pris l'URI en compte"
+
+mlflow.set_experiment(config["model_config"]["mlflow_experiment_name"])
+
+# Configuration du logging
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     filename=os.path.join("logs", "training.log"),
@@ -32,16 +56,10 @@ logger = logging.getLogger("training")
 
 
 def main():
-    # Lecture des paramètres depuis params.yaml
-    with open("params.yaml", "r", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
     train_params = config["train"]
     model_config = config["model_config"]
 
-    # Configuration MLflow selon les recommandations DagsHub
-    mlflow.set_tracking_uri(model_config["mlflow_tracking_uri"])
-    mlflow.set_experiment(model_config["mlflow_experiment_name"])
-    logger.info("MLflow tracking configuré.")
+    logger.info("Début de l'entraînement du modèle.")
 
     # Chargement des données prétraitées
     data_path = train_params["input"]
@@ -56,10 +74,14 @@ def main():
         logger.error("La colonne 'Prix' est manquante dans le DataFrame.")
         return
 
-    # Préparation des données (séparation X/y et gestion des colonnes)
+    # Séparation des features et de la target
     y = df["Prix"].values
-    X = df.drop(columns=["Prix", "SKU", "Timestamp"], errors="ignore")
-    X = X.apply(pd.to_numeric, errors="coerce").fillna(0)
+    X = (
+        df.drop(columns=["Prix", "SKU", "Timestamp"], errors="ignore")
+        .apply(pd.to_numeric, errors="coerce")
+        .fillna(0)
+    )
+
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
@@ -67,7 +89,7 @@ def main():
         random_state=train_params["random_state"],
     )
 
-    # Définition de la distribution des hyperparamètres
+    # Définition des hyperparamètres
     dist_params = train_params["param_dist"]
     param_dist = {
         "n_estimators": randint(
@@ -94,7 +116,7 @@ def main():
         ),
     }
 
-    # Initialisation de la recherche aléatoire des hyperparamètres avec XGBoost
+    # Initialisation du modèle avec RandomizedSearchCV
     model_xgb = RandomizedSearchCV(
         XGBRegressor(
             objective="reg:squarederror", random_state=train_params["random_state"]
@@ -107,7 +129,7 @@ def main():
         random_state=train_params["random_state"],
     )
 
-    # Entraînement et logging dans une run MLflow
+    # Entraînement et logging dans MLflow
     with mlflow.start_run(run_name="XGBoost_RandSearch") as run:
         logger.info("Démarrage de la recherche d'hyperparamètres XGBoost.")
         model_xgb.fit(X_train, y_train)
@@ -119,30 +141,22 @@ def main():
         logger.info(f"Meilleurs paramètres : {best_params}")
         logger.info(f"Métrique R² : {r2:.4f}")
 
-        # Log des métriques et des paramètres
         mlflow.log_metric("r2_score", r2)
         for param, value in best_params.items():
             mlflow.log_param(param, value)
 
-        # Enregistrement du modèle avec mlflow.sklearn.log_model
         input_example = X_test.iloc[:1]
         signature = infer_signature(X_train, model_xgb.best_estimator_.predict(X_train))
-        model_path = "xgb_model"
 
         mlflow.sklearn.log_model(
             sk_model=model_xgb.best_estimator_,
-            artifact_path=model_path,
+            artifact_path="xgb_model",
             registered_model_name=model_config["mlflow_model_name"],
             signature=signature,
             input_example=input_example,
         )
-        logger.info(
-            f"Modèle enregistré et enregistré dans le Model Registry sous : {model_config['mlflow_model_name']}"
-        )
 
-        print("\nRésumé de l'entraînement :")
-        print(f"R² : {r2:.4f}")
-        print(f"Meilleurs hyperparamètres : {best_params}")
+        print(f"Modèle enregistré avec succès dans MLflow. R² : {r2:.4f}")
 
 
 if __name__ == "__main__":
