@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1740294638561
+current_stage: None
+description: null
+last_updated_timestamp: 1740294638561
+name: BestModel
+run_id: bc7dbd984aeb475cb73d92ebae6acd28
+run_link: null
+source: file:///C:/Users/samir/Desktop/rakuten-mlops/mlruns/0/bc7dbd984aeb475cb73d92ebae6acd28/artifacts/xgb_model
+status: READY
+status_message: null
+storage_location: file:///C:/Users/samir/Desktop/rakuten-mlops/mlruns/0/bc7dbd984aeb475cb73d92ebae6acd28/artifacts/xgb_model
+user_id: null
+version: 11
